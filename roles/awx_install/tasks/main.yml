@@ -1,0 +1,8 @@
+- name: Installing awx with helm
+  become: yes
+  command: "{{ item }}"
+  with_items:
+    - microk8s helm repo add awx-operator https://ansible.github.io/awx-operator/
+    - microk8s helm repo update
+    - microk8s helm install -n awx --create-namespace my-awx-operator awx-operator/awx-operator --kubeconfig /var/snap/microk8s/current/credentials/client.config
+

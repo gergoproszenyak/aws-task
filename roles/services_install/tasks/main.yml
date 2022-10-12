@@ -1,0 +1,53 @@
+---
+
+- name: Make sure snapd is installed
+  apt:
+    name:
+      - snapd
+    update_cache: yes
+    state: present
+  become: yes
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install docker
+  apt:
+    name: docker.io
+    update_cache: true
+    cache_valid_time: 86400
+    state: present
+
+- name: Install microk8s
+  become: yes
+  snap:
+    name: microk8s
+    state: present
+    classic: yes
+
+- name: Wait for Microk8s to be ready
+  become: yes
+  command: microk8s.status --wait-ready
+  changed_when: false
+  register: mk8sstatusout
+  failed_when:
+      - "'This MicroK8s deployment is acting as a node in a cluster.' not in mk8sstatusout.stdout_lines"
+      - mk8sstatusout.rc > 0
+
+- name: Enable Microk8s add-ons
+  become: yes
+  command: microk8s enable dns storage ingress
+  changed_when: false
+  register: mk8saddons
+
+- name: Add user to  Microk8s groups
+  user:
+    name: '{{ lookup("env", "USER") }}'
+    state: present
+    groups:
+      - microk8s
+    append: true
+
+- name: Create kubectl alias
+  become: yes
+  command: "snap alias microk8s.kubectl kubectl"
+  changed_when: false
+  register: aliaskubectlout

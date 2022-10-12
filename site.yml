@@ -1,0 +1,17 @@
+---
+
+- hosts: all
+  name: Download and install Microk8s on all nodes
+  become: yes
+  roles:
+    - role: services_install
+      tags: services_install
+
+- hosts: workers
+  become: yes
+  name: Download and install and AWX on the workers
+  roles:
+    - role: helm_setup
+      tags: helm_setup
+    - role: awx_install
+      tags: awx_install
